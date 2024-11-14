@@ -1,5 +1,6 @@
 ﻿using LabAllianceTest.API.Abstractions;
 using LabAllianceTest.API.Contracts;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LabAllianceTest.API.Controllers
@@ -38,6 +39,7 @@ namespace LabAllianceTest.API.Controllers
         }
 
         [HttpGet]
+        [Authorize]
         public async Task<ActionResult> GetAllUsersAsync()
         {
             var users = await _userService.GetAllUsersAsync();
@@ -48,12 +50,12 @@ namespace LabAllianceTest.API.Controllers
         }
 
         [HttpGet]
-        [Route("refreshToken")]
+        [Route("token")]
         public ActionResult RefreshToken()
         {
-            var token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+            var oldToken = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
 
-            var newToken = _jwtProvider.RefreshToken(token);
+            var token = _jwtProvider.RefreshToken(oldToken);
 
             return Ok(new { token });
         }

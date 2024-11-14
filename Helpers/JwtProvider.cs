@@ -31,38 +31,26 @@ namespace LabAllianceTest.API.Helpers
             return tokenValue;
         }
 
-        //Обновление токена
         public string RefreshToken(string jwtToken)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
+            var token = (JwtSecurityToken)tokenHandler.ReadToken(jwtToken);
 
-            try
+            var expiration = token.ValidTo;
+
+            if (expiration < DateTime.UtcNow)
             {
-                var principal = tokenHandler.ValidateToken(jwtToken, new TokenValidationParameters
-                {
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.SecretKey)),
-                    ValidateIssuer = false,
-                    ValidateAudience = false,
-                    ClockSkew = TimeSpan.Zero
-                }, out SecurityToken validatedToken);
+                var claims = token.Claims;
 
-                var userId = principal.Claims.FirstOrDefault(c => c.Type == "userId")?.Value;
-                var login = principal.Claims.FirstOrDefault(c => c.Type == "login")?.Value;
+                var userId = claims.FirstOrDefault(c => c.Type == "userId")?.Value;
+                var login = claims.FirstOrDefault(c => c.Type == "login")?.Value;
 
-                if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(login))
-                {
-                    throw new Exception("Invalid token");
-                }
+                var user = UserModel.Create(Guid.Parse(userId), login, false).user;
 
-                var newUser = UserModel.Create(Guid.Parse(userId), login, false).user;
-
-                return GenerateToken(newUser);
+                return GenerateToken(user);
             }
-            catch (Exception)
-            {
-                throw new Exception("Token is invalid or expired");
-            }
+
+            return jwtToken;
         }
     }
 }
