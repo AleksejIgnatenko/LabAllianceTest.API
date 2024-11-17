@@ -30,6 +30,36 @@ namespace LabAllianceTest.API.Middleware
                 var result = JsonSerializer.Serialize(new { error = ex.Errors });
                 await context.Response.WriteAsync(result);
             }
+            catch (UserCreationException ex)
+            {
+                var statusCode = StatusCodes.Status400BadRequest;
+
+                context.Response.StatusCode = statusCode;
+                context.Response.ContentType = "application/json";
+
+                var result = JsonSerializer.Serialize(new { error = ex.Errors });
+                await context.Response.WriteAsync(result);
+            }
+            catch (TokenNotFoundException ex)
+            {
+                var statusCode = StatusCodes.Status400BadRequest;
+
+                context.Response.StatusCode = statusCode;
+                context.Response.ContentType = "application/json";
+
+                var result = JsonSerializer.Serialize(new { error = ex });
+                await context.Response.WriteAsync(result);
+            }
+            catch (InvalidTokenException ex)
+            {
+                var statusCode = StatusCodes.Status400BadRequest;
+
+                context.Response.StatusCode = statusCode;
+                context.Response.ContentType = "application/json";
+
+                var result = JsonSerializer.Serialize(new { error = ex });
+                await context.Response.WriteAsync(result);
+            }
             catch (AuthenticationFailedException ex)
             {
                 var statusCode = StatusCodes.Status401Unauthorized;

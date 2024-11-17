@@ -1,8 +1,9 @@
-﻿namespace LabAllianceTest.API.Entities
+﻿using Microsoft.AspNetCore.Identity;
+
+namespace LabAllianceTest.API.Entities
 {
-    public class UserEntity
+    public class UserEntity : IdentityUser
     {
-        public Guid Id { get; set; }
         public string Login { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
     }

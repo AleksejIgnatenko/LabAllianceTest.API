@@ -1,11 +1,14 @@
 using LabAllianceTest.API;
 using LabAllianceTest.API.Abstractions;
+using LabAllianceTest.API.Entities;
 using LabAllianceTest.API.Helpers;
 using LabAllianceTest.API.Middleware;
+using LabAllianceTest.API.Models;
 using LabAllianceTest.API.Repositories;
 using LabAllianceTest.API.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -50,54 +53,69 @@ var jwtOptions = builder.Configuration.GetSection(nameof(JwtOptions)).Get<JwtOpt
 builder.Services.AddDbContext<LabAllianceTestAPIDbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
-    options.UseOpenIddict();
 });
 
+// Настройка Identity
+builder.Services.AddIdentity<UserEntity, IdentityRole>()
+    .AddEntityFrameworkStores<LabAllianceTestAPIDbContext>()
+    .AddDefaultTokenProviders();
+
+// Настройка OpenIddict
 builder.Services.AddOpenIddict()
     .AddCore(options =>
     {
         options.UseEntityFrameworkCore()
-                .UseDbContext<LabAllianceTestAPIDbContext>();
+            .UseDbContext<LabAllianceTestAPIDbContext>();
     })
     .AddServer(options =>
     {
-        options.SetAuthorizationEndpointUris("connect/authorize")
-                .SetLogoutEndpointUris("connect/logout")
-                .SetTokenEndpointUris("connect/token")
-                .SetUserinfoEndpointUris("connect/userinfo");
-
-        options.RegisterScopes(Scopes.Email, Scopes.Profile, Scopes.Roles);
-
-        options.AllowAuthorizationCodeFlow();
-
-        options.AddEncryptionKey(new SymmetricSecurityKey(
-            Convert.FromBase64String("DRjd/GnduI3Efzen9V9BvbNUfc/VKgXltV7Kbk9sMkY=")));
+        options.SetTokenEndpointUris("/connect/token")
+               .AllowPasswordFlow()
+               .AcceptAnonymousClients();
 
         options.AddDevelopmentEncryptionCertificate()
-                .AddDevelopmentSigningCertificate();
+               .AddDevelopmentSigningCertificate();
 
-        options.UseAspNetCore()
-                .EnableAuthorizationEndpointPassthrough()
-                .EnableLogoutEndpointPassthrough()
-                .EnableTokenEndpointPassthrough()
-                .EnableUserinfoEndpointPassthrough();
-    });
+        options.SetAccessTokenLifetime(TimeSpan.FromMinutes(15));
+        options.SetRefreshTokenLifetime(TimeSpan.FromDays(30));
+    })
+.AddValidation(options =>
+{
+    options.UseLocalServer();
+    options.UseAspNetCore();
+    options.EnableAuthorizationEntryValidation();
 
-builder.Services.AddTransient<AuthorizationService>();
+    options.SetIssuer("https://localhost:5001/");
+    options.AddAudiences("audience");
+});
 
-//builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-//    .AddCookie(c =>
-//    {
-//        c.LoginPath = "/Authenticate";
-//    });
+// Настройка аутентификации
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("YourStrongBase64EncodedKeyHereShouldBe32Bytes")),
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        ClockSkew = TimeSpan.Zero
+    };
+});
 
 builder.Services.AddScoped<IJwtProvider, JwtProvider>();
+
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<ITokenRepository, TokenRepository>();
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
-builder.Services.AddScoped<ClientsSeeder>();
 
 builder.Services.AddAuthorization();
 
@@ -132,13 +150,5 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
-
-using (var scope = app.Services.CreateScope())
-{
-    var seeder = scope.ServiceProvider.GetRequiredService<ClientsSeeder>();
-    seeder.AddOidcDebuggerClient().GetAwaiter().GetResult();
-    seeder.AddWebClient().GetAwaiter().GetResult();
-    seeder.AddScopes().GetAwaiter().GetResult();
-}
 
 app.Run();

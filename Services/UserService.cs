@@ -1,18 +1,15 @@
 ﻿using LabAllianceTest.API.Abstractions;
 using LabAllianceTest.API.Exceptions;
 using LabAllianceTest.API.Models;
-
 namespace LabAllianceTest.API.Services
 {
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
-        private readonly IJwtProvider _jwtProvider;
 
-        public UserService(IUserRepository userRepository, IJwtProvider jwtProvider)
+        public UserService(IUserRepository userRepository)
         {
             _userRepository = userRepository;
-            _jwtProvider = jwtProvider;
         }
 
         public async Task<Guid> CreateUserAsync(Guid id, string login, string password)
@@ -23,18 +20,9 @@ namespace LabAllianceTest.API.Services
                 throw new UserValidationException(errors);
             }
 
-            await _userRepository.CreateUserAsync(user);
+            var userId = await _userRepository.CreateUserAsync(user);
 
-            return user.Id;
-        }
-
-        public async Task<string> LoginUserAsync(string login, string password)
-        {
-            var user = await _userRepository.LoginUserAsync(login, password);
-
-            var token = _jwtProvider.GenerateToken(user);
-
-            return token;
+            return userId;
         }
 
         public async Task<List<UserModel>> GetAllUsersAsync()
