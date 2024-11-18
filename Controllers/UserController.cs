@@ -17,6 +17,7 @@ namespace LabAllianceTest.API.Controllers
             _userService = userService;
         }
 
+        // Регистрация
         [HttpPost]
         [Route("registration")]
         public async Task<ActionResult> UserRegistrationAsync([FromBody] UserRequest userRequest)
@@ -28,6 +29,7 @@ namespace LabAllianceTest.API.Controllers
             return Ok();
         }
 
+        // Получение всех пользователей
         [HttpGet]
         [Authorize]
         public async Task<ActionResult> GetAllUsersAsync()

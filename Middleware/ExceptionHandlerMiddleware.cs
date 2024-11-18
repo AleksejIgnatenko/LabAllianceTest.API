@@ -14,6 +14,7 @@ namespace LabAllianceTest.API.Middleware
             _logger = logger;
         }
 
+        // Обработка исключений
         public async Task Invoke(HttpContext context)
         {
             try

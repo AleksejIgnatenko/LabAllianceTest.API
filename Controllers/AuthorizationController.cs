@@ -16,6 +16,7 @@ namespace LabAllianceTest.API.Controllers
             _tokenService = tokenService;
         }
 
+        // Создание токена
         [HttpPost("token")]
         public async Task<ActionResult> ExchangeAsync([FromBody] UserRequest request)
         {
@@ -29,7 +30,7 @@ namespace LabAllianceTest.API.Controllers
             });
         }
 
-        // Эндпоинт для обновления access токена
+        // Обновления access токена
         [HttpPost("refresh")]
         public async Task<ActionResult> Refresh([FromBody] string refreshTokenRequest)
         {

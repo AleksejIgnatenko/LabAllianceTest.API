@@ -48,9 +48,9 @@ namespace LabAllianceTest.API.Repositories
         public async Task<UserModel> AuthenticateUserAsync(string login, string password)
         {
             var userEntity = await _userManager.FindByNameAsync(login);
-            if (userEntity == null || !await _userManager.CheckPasswordAsync(userEntity, password))
+            if (userEntity == null || !_passwordHasher.Verify(password, userEntity.Password))
             {
-                throw new AuthenticationFailedException("Invalid credentials.");
+                throw new AuthenticationFailedException("Неверный логин или пароль.");
             }
 
             var userModel = UserModel.Create(

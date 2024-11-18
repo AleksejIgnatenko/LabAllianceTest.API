@@ -25,7 +25,7 @@ namespace LabAllianceTest.API.Services
         {
             var user = await _userRepository.AuthenticateUserAsync(login, password);
 
-            // Генерация JWT токена
+            // Генерация accessToken токена
             var claims = new[]
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
@@ -70,6 +70,7 @@ namespace LabAllianceTest.API.Services
                 throw new InvalidTokenException("Invalid refresh token.");
             }
 
+            // Генерация accessToken токена
             var userId = tokenInfo.Subject;
 
             var claims = new[]

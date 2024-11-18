@@ -23,9 +23,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(nameof(JwtOptions)));
+//builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(nameof(JwtOptions)));
 
-var jwtOptions = builder.Configuration.GetSection(nameof(JwtOptions)).Get<JwtOptions>();
+//var jwtOptions = builder.Configuration.GetSection(nameof(JwtOptions)).Get<JwtOptions>();
 
 // Add JWT bearer authentication
 //builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -70,14 +70,15 @@ builder.Services.AddOpenIddict()
     .AddServer(options =>
     {
         options.SetTokenEndpointUris("/connect/token")
+               .SetAuthorizationEndpointUris("/connect/registration")
                .AllowPasswordFlow()
                .AcceptAnonymousClients();
 
         options.AddDevelopmentEncryptionCertificate()
                .AddDevelopmentSigningCertificate();
 
-        options.SetAccessTokenLifetime(TimeSpan.FromMinutes(15));
-        options.SetRefreshTokenLifetime(TimeSpan.FromDays(30));
+        //options.SetAccessTokenLifetime(TimeSpan.FromMinutes(15));
+        //options.SetRefreshTokenLifetime(TimeSpan.FromDays(30));
     })
 .AddValidation(options =>
 {
@@ -106,8 +107,6 @@ builder.Services.AddAuthentication(options =>
         ClockSkew = TimeSpan.Zero
     };
 });
-
-builder.Services.AddScoped<IJwtProvider, JwtProvider>();
 
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<ITokenRepository, TokenRepository>();
